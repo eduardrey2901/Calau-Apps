@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0F0F0D"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Restaurante"/>
+<title>Restaurante</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0F0F0D;
+  --bg2:#161614;
+  --bg3:#1E1E1B;
+  --border:#2A2A26;
+  --border2:#333330;
+  --text:#F0EDE6;
+  --text2:#A09D96;
+  --text3:#5A5750;
+  --green:#4CAF72;
+  --green-bg:#0D2015;
+  --red:#E05555;
+  --red-bg:#200D0D;
+  --amber:#D4922A;
+  --amber-bg:#201408;
+  --blue:#4A90D9;
+  --accent:#C8A96E;
+  --accent2:#8B6A3A;
+  --r:12px;
+  --r2:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* LAYOUT */
+.app{max-width:680px;margin:0 auto;padding:0 16px 90px;}
+
+/* HEADER */
+.hdr{padding:24px 0 16px;display:flex;align-items:flex-start;justify-content:space-between;}
+.hdr-left h1{font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:var(--text);letter-spacing:-.3px;}
+.hdr-left p{font-size:12px;color:var(--text3);margin-top:3px;letter-spacing:.02em;}
+.hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:10px;box-shadow:0 0 8px var(--green);}
+.hdr-dot.busy{background:var(--red);box-shadow:0 0 8px var(--red);}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,15,13,.95);backdrop-filter:blur(20px);border-top:0.5px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px 9px;font-size:10px;font-weight:500;color:var(--text3);background:none;border:none;cursor:pointer;transition:color .2s;letter-spacing:.04em;text-transform:uppercase;}
+.bnav-btn.active{color:var(--accent);}
+.bnav-btn svg{width:22px;height:22px;stroke-width:1.5;}
+.bnav-badge{position:absolute;top:6px;right:calc(50% - 14px);background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.bnav-btn{position:relative;}
+
+/* SECTIONS */
+.sec{display:none;animation:fadeIn .2s ease;}
+.sec.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+/* ═══ SALAS ═══ */
+.sala-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:16px;-ms-overflow-style:none;scrollbar-width:none;}
+.sala-tabs::-webkit-scrollbar{display:none;}
+.sala-tab{flex-shrink:0;padding:7px 16px;border-radius:30px;font-size:12px;font-weight:500;border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;letter-spacing:.03em;}
+.sala-tab.active{background:var(--accent);color:#0F0F0D;border-color:var(--accent);}
+.sala-tab.off{opacity:.5;}
+
+.mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-bottom:16px;}
+.mesa-card{border-radius:var(--r);border:0.5px solid var(--border);padding:11px 12px;cursor:pointer;transition:all .2s;background:var(--bg2);position:relative;overflow:hidden;}
+.mesa-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0;}
+.mesa-card.libre::before{background:var(--green);}
+.mesa-card.ocupada{background:#180E0E;border-color:#2D1515;}
+.mesa-card.ocupada::before{background:var(--red);}
+.mesa-card.combinada{background:#1A1508;border-color:#2D2210;}
+.mesa-card.combinada::before{background:var(--amber);}
+.mesa-card.inactiva{opacity:.35;}
+.mesa-card:active{transform:scale(.97);}
+
+.mesa-id{font-size:13px;font-weight:600;color:var(--text);}
+.mesa-cap{font-size:11px;color:var(--text3);margin-top:2px;}
+.mesa-pers{font-size:11px;color:var(--text2);margin-top:6px;}
+.mesa-rest{font-size:12px;font-weight:600;color:var(--text);margin-top:1px;}
+.prog{height:2px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width .5s;}
+.libre .prog-fill{background:var(--green);}
+.ocupada .prog-fill{background:var(--red);}
+.combinada .prog-fill{background:var(--amber);}
+
+.badge{display:inline-flex;align-items:center;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase;margin-top:5px;}
+.b-libre{background:var(--green-bg);color:var(--green);}
+.b-ocu{background:var(--red-bg);color:var(--red);}
+.b-comb{background:var(--amber-bg);color:var(--amber);}
+.b-off{background:var(--bg3);color:var(--text3);}
+
+/* ACTION BAR */
+.abar{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r2);padding:16px;margin-top:8px;}
+.abar-title{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+.arow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.fgroup{display:flex;flex-direction:column;gap:5px;}
+.flabel{font-size:11px;color:var(--text3);letter-spacing:.03em;}
+select,input,textarea{font-size:14px;color:var(--text);background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px;outline:none;-webkit-appearance:none;transition:border-color .2s;font-family:'DM Sans',sans-serif;}
+select:focus,input:focus,textarea:focus{border-color:var(--accent);}
+
+/* BUTTONS */
+.btn{padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;letter-spacing:.02em;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.btn:active{transform:scale(.97);}
+.btn-pri{background:var(--accent);color:#0F0F0D;}
+.btn-sec{background:transparent;border:0.5px solid var(--border);color:var(--text);}
+.btn-ghost{background:transparent;border:none;color:var(--text2);padding:8px 10px;}
+.btn-green{background:var(--green-bg);color:var(--green);border:0.5px solid #1A4028;}
+.btn-red{background:var(--red-bg);color:var(--red);border:0.5px solid #3D1515;}
+.btn-wa{background:#075E54;color:#fff;}
+.btn-sm{font-size:11px;padding:6px 12px;}
+.flex1{flex:1;justify-content:center;}
+
+/* ═══ ESPERA ═══ */
+.espera-card{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r2);margin-bottom:8px;transition:border-color .2s;}
+.espera-card.urgente{border-color:var(--amber);background:#1A1508;}
+.enum{width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text2);flex-shrink:0;}
+.einfo{flex:1;min-width:0;}
+.ename{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.esub{font-size:11px;color:var(--text3);margin-top:2px;}
+.etime{text-align:right;flex-shrink:0;}
+.emin{font-size:14px;font-weight:700;}
+.eest{font-size:10px;color:var(--text3);margin-top:1px;letter-spacing:.03em;text-transform:uppercase;}
+.ex{font-size:22px;color:var(--text3);cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0;}
+.wa-btn{background:#075E54;border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:600;margin-top:5px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+
+/* ═══ CONFIG ═══ */
+.cfg-section{margin-bottom:24px;}
+.cfg-section-title{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.cfg-section-title::after{content:'';flex:1;height:0.5px;background:var(--border);}
+.cfg-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:8px;}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border);}
+.cfg-row:last-child{border-bottom:none;padding-bottom:0;}
+.cfg-row:first-child{padding-top:0;}
+.cfg-key{font-size:13px;color:var(--text);}
+.cfg-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* TOGGLE */
+.tgl{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .25s;padding:0;}
+.tgl-on{background:var(--green);}
+.tgl-off{background:var(--border2);}
+.tgl-k{position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+
+/* TIEMPOS */
+.tiempo-item{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:6px;}
+.tcat{font-size:13px;min-width:110px;}
+.tbar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.tbar-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .5s;}
+.tval{font-size:14px;font-weight:700;min-width:52px;text-align:right;}
+.tdat{font-size:10px;color:var(--text3);min-width:58px;text-align:right;letter-spacing:.02em;}
+
+/* SALA CONFIG CARD */
+.sala-cfg-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;}
+.sala-cfg-name{font-size:14px;font-weight:600;}
+.sala-cfg-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.mesas-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+.mpill{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--bg3);color:var(--text2);border:0.5px solid var(--border);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;z-index:200;}
+.modal-bg.open{display:flex;}
+.modal-box{background:var(--bg2);border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:680px;border-top:0.5px solid var(--border2);max-height:88vh;overflow-y:auto;}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 16px;}
+.modal-title{font-family:'DM Serif Display',serif;font-size:20px;font-weight:400;margin-bottom:16px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-icon{font-size:36px;margin-bottom:12px;}
+.empty p{font-size:14px;}
+
+/* INFO BOX */
+.infobox{background:var(--bg3);border-radius:var(--r);padding:12px 14px;margin-top:10px;}
+.infobox p{font-size:12px;color:var(--text3);line-height:1.5;}
+
+/* UTILS */
+.mt8{margin-top:8px;} .mt12{margin-top:12px;} .mt16{margin-top:16px;}
+.flex{display:flex;} .gap6{gap:6px;} .gap8{gap:8px;} .gap10{gap:10px;} .wrap{flex-wrap:wrap;}
+.separator{height:0.5px;background:var(--border);margin:16px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1 id="rest-nombre">Mi Restaurante</h1>
+      <p id="resumen">Cargando...</p>
+    </div>
+    <div class="hdr-dot" id="hdr-dot"></div>
+  </div>
+
+  <!-- ══ SALAS ══ -->
+  <div class="sec active" id="sec-salas">
+    <div class="sala-tabs" id="sala-tabs"></div>
+    <div id="salas-cont"></div>
+    <div class="abar">
+      <div class="abar-title">Gestionar mesa</div>
+      <div class="arow">
+        <div class="fgroup flex1">
+          <span class="flabel">Mesa</span>
+          <select id="sel-mesa" style="width:100%;"></select>
+        </div>
+        <div class="fgroup" style="flex:0 0 85px;">
+          <span class="flabel">Personas</span>
+          <select id="sel-pers" style="width:100%;">
+            <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+            <option value="8">8</option><option value="10">10</option><option value="12">12+</option>
+          </select>
+        </div>
+      </div>
+      <div class="arow mt8">
+        <button class="btn btn-pri flex1" onclick="sentarGrupo()">Sentar</button>
+        <button class="btn btn-sec" onclick="abrirLiberar()">Liberar mesa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ESPERA ══ -->
+  <div class="sec" id="sec-espera">
+    <div class="abar" style="margin-bottom:14px;">
+      <div class="abar-title">Añadir a la cola</div>
+      <div class="arow">
+        <input class="flex1" type="text" id="inp-nombre" placeholder="Nombre del grupo" style="min-width:0;"/>
+        <input type="tel" id="inp-tel" placeholder="Teléfono" style="flex:0 0 135px;"/>
+      </div>
+      <div class="arow mt8">
+        <select id="inp-pers" style="flex:0 0 105px;">
+          <option value="2">2 pers.</option><option value="3">3</option><option value="4">4</option>
+          <option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="12">12+</option>
+        </select>
+        <button class="btn btn-pri flex1" onclick="addEspera()">+ Añadir</button>
+      </div>
+    </div>
+    <div id="lista-espera"></div>
+    <div class="empty" id="espera-empty" style="display:none;">
+      <div class="empty-icon">🎉</div>
+      <p>Sin grupos en espera</p>
+    </div>
+  </div>
+
+  <!-- ══ CONFIG ══ -->
+  <div class="sec" id="sec-config">
+
+    <!-- Restaurante -->
+    <div class="cfg-section">
+      <div class="cfg-section-title">Restaurante</div>
+      <div class="cfg-card">
+        <div class="cfg-row">
+          <div><div class="cfg-key">Nombre</div></div>
+          <div class="flex gap8" style="align-items:center;">
+            <input type="text" id="cfg-nombre" placeholder="Mi Restaurante" style="width:160px;font-size:13px;padding:7px 10px;text-align:right;"/>
+            <button class="btn btn-sec btn-sm" onclick="guardarNombre()">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salas -->
+    <div class="cfg-section">
+      <div class="cfg-section-title">Salas</div>
+      <div id="cfg-salas"></div>
+      <button class="btn btn-sec" style="width:100%;justify-content:center;margin-top:4px;" onclick="abrirModalSala(null)">+ Nueva sala</button>
+    </div>
+
+    <!-- Tiempos -->
+    <div class="cfg-section">
+      <div class="cfg-section-title">Tiempos aprendidos</div>
+      <div id="tiempos-list"></div>
+      <div class="infobox"><p id="hist-txt">Sin datos aún. Los tiempos se ajustan automáticamente al liberar mesas.</p></div>
+    </div>
+
+    <!-- WhatsApp -->
+    <div class="cfg-section">
+      <div class="cfg-section-title">Mensajes WhatsApp</div>
+      <div class="cfg-card">
+        <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div>
+            <div class="cfg-key">Mensaje al apuntarse</div>
+            <div class="cfg-sub">Variables: {nombre} {tiempo} {restaurante}</div>
+          </div>
+          <textarea id="msg-entrada" rows="3" style="width:100%;font-size:13px;line-height:1.5;resize:none;"></textarea>
+        </div>
+        <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:8px;border-bottom:none;padding-bottom:0;">
+          <div>
+            <div class="cfg-key">Mensaje cuando hay mesa lista</div>
+            <div class="cfg-sub">Variables: {nombre} {restaurante}</div>
+          </div>
+          <textarea id="msg-mesa" rows="3" style="width:100%;font-size:13px;line-height:1.5;resize:none;"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-sec" style="width:100%;justify-content:center;margin-top:4px;" onclick="guardarMensajes()">Guardar mensajes</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="bnav-btn active" id="nav-salas" onclick="goTab('salas')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+    Salas
+  </button>
+  <button class="bnav-btn" id="nav-espera" onclick="goTab('espera')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span id="nav-espera-badge" style="display:none;" class="bnav-badge">0</span>
+    Espera
+  </button>
+  <button class="bnav-btn" id="nav-config" onclick="goTab('config')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    Config
+  </button>
+</nav>
+
+<!-- MODAL LIBERAR -->
+<div class="modal-bg" id="modal-liberar">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Liberar mesa</div>
+    <select id="sel-liberar" style="width:100%;margin-bottom:14px;font-size:15px;"></select>
+    <div class="flex gap8">
+      <button class="btn btn-pri flex1" onclick="confirmarLiberar()">Confirmar</button>
+      <button class="btn btn-sec flex1" onclick="cerrarModal('modal-liberar')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SALA -->
+<div class="modal-bg" id="modal-sala">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-sala-titulo">Nueva sala</div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div class="flabel" style="margin-bottom:5px;">Nombre de la sala</div>
+        <input type="text" id="ms-nombre" placeholder="Ej: Terraza" style="width:100%;"/>
+      </div>
+      <div>
+        <div class="flabel" style="margin-bottom:5px;">Mesas — escribe la capacidad de cada una en una línea</div>
+        <textarea id="ms-mesas" rows="7" placeholder="2&#10;2&#10;4&#10;4&#10;6&#10;6" style="width:100%;resize:vertical;line-height:2;"></textarea>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;">Cada número = una mesa con esa capacidad de personas.</div>
+      </div>
+    </div>
+    <div class="flex gap8 mt16">
+      <button class="btn btn-pri flex1" onclick="guardarSala()">Guardar sala</button>
+      <button class="btn btn-sec flex1" onclick="cerrarModal('modal-sala')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WA CONFIRMACION -->
+<div class="modal-bg" id="modal-wa">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Enviar por WhatsApp</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" id="wa-preview-label">Vista previa del mensaje:</div>
+    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;font-size:14px;line-height:1.6;color:var(--text);margin-bottom:16px;white-space:pre-wrap;" id="wa-preview"></div>
+    <div class="flex gap8">
+      <button class="btn btn-wa flex1" onclick="confirmarWA()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        Abrir WhatsApp
+      </button>
+      <button class="btn btn-sec" onclick="cerrarModal('modal-wa')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ESTADO Y PERSISTENCIA
+// ═══════════════════════════════════════════════════════
+const SK = 'restaurante_v2';
+let pDel = null, editSalaId = null, waCtx = null, salaActual = 'todas';
+
+const DEF = {
+  config:{
+    nombre:'Mi Restaurante',
+    salas:[
+      {id:'sala-a',nombre:'Sala A',activa:true,mesas:[{cap:2},{cap:2},{cap:2},{cap:2},{cap:2},{cap:4},{cap:4}]},
+      {id:'sala-b',nombre:'Sala B',activa:true,mesas:[{cap:4},{cap:4},{cap:4},{cap:4}]},
+      {id:'sala-c',nombre:'Sala C',activa:true,mesas:[{cap:6},{cap:6},{cap:8}]}
+    ],
+    msgEntrada:'Hola {nombre} 👋 Te hemos apuntado en la lista de espera de {restaurante}. Tu tiempo estimado de espera es de {tiempo}. ¡Gracias por tu paciencia!',
+    msgMesa:'Hola {nombre} 🎉 Ya tienes mesa lista en {restaurante}. Por favor acércate al local en los próximos 5 minutos. ¡Te esperamos!'
+  },
+  mesas:[], espera:[], eid:1,
+  tiempos:{pequena:35,mediana:50,grande:75},
+  historial:{pequena:[],mediana:[],grande:[]}
+};
+
+let S = cargar();
+
+function cargar(){
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const s=JSON.parse(r);
+      s.mesas.forEach(m=>{if(m.fin)m.fin=parseInt(m.fin);if(m.inicio)m.inicio=parseInt(m.inicio);});
+      // Migrar campos nuevos si no existen
+      if(!s.config.msgEntrada) s.config.msgEntrada=DEF.config.msgEntrada;
+      if(!s.config.msgMesa) s.config.msgMesa=DEF.config.msgMesa;
+      return s;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEF));
+}
+function save(){ try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){} }
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function cat(n){ n=parseInt(n); return n<=2?'pequena':n<=5?'mediana':'grande'; }
+function catL(c){ return{pequena:'Pequeño (1–2)',mediana:'Mediano (3–5)',grande:'Grande (6+)'}[c]; }
+function libre(m){ return m.salaActiva&&m.estado==='libre'; }
+function restMs(m){ return m.fin?Math.max(0,m.fin-Date.now()):null; }
+function fmin(ms){ const m=Math.round(ms/60000); return m<=0?'Terminando':m+' min'; }
+
+function buscarMesas(n){
+  n=parseInt(n);
+  const ls=S.mesas.filter(libre);
+  const ok=ls.filter(m=>m.cap>=n).sort((a,b)=>a.cap-b.cap);
+  if(ok.length) return [ok[0]];
+  if(n<=4){const d=ls.filter(m=>m.cap===2);if(d.length>=2)return[d[0],d[1]];}
+  return null;
+}
+
+function calcEsperas(){
+  const now=Date.now();
+  const slots=S.mesas.filter(m=>m.salaActiva).map(m=>({id:m.id,cap:m.cap,libreEn:m.estado==='libre'?now:(m.fin||now)}));
+  return S.espera.map(g=>{
+    const n=parseInt(g.personas),c=cat(n),dur=S.tiempos[c]*60000;
+    const cands=slots.filter(s=>s.cap>=n||(s.cap===2&&n<=4)).sort((a,b)=>a.libreEn-b.libreEn);
+    if(!cands.length) return S.tiempos[c];
+    const ya=cands.find(s=>s.libreEn<=now);
+    if(ya){ya.libreEn=now+dur;return 0;}
+    const m=cands[0];
+    const e=Math.max(0,Math.round((m.libreEn-now)/60000));
+    m.libreEn+=dur;
+    return e;
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// BUILD MESAS
+// ═══════════════════════════════════════════════════════
+function buildMesas(){
+  const prev={};S.mesas.forEach(m=>prev[m.id]=m);
+  S.mesas=[];
+  S.config.salas.forEach(sala=>{
+    sala.mesas.forEach((m,i)=>{
+      const id=sala.id+'-'+i,old=prev[id];
+      S.mesas.push(old&&old.salaId===sala.id
+        ?{...old,salaActiva:sala.activa,cap:m.cap,label:sala.nombre+' M'+(i+1),salaNombre:sala.nombre}
+        :{id,label:sala.nombre+' M'+(i+1),cap:m.cap,salaId:sala.id,salaNombre:sala.nombre,salaActiva:sala.activa,estado:'libre',personas:null,inicio:null,fin:null,combinadaCon:null});
+    });
+  });
+  save();
+}
+
+// ═══════════════════════════════════════════════════════
+// MESAS ACCIONES
+// ═══════════════════════════════════════════════════════
+function ocupar(arr,n,now,dur){
+  const fin=now+dur;
+  if(arr.length===2){
+    arr[0].estado='combinada';arr[0].personas=n;arr[0].inicio=now;arr[0].fin=fin;arr[0].combinadaCon=arr[1].id;
+    arr[1].estado='combinada';arr[1].personas=n;arr[1].inicio=now;arr[1].fin=fin;arr[1].combinadaCon=arr[0].id;
+  }else{arr[0].estado='ocupada';arr[0].personas=n;arr[0].inicio=now;arr[0].fin=fin;}
+}
+
+function sentarGrupo(){
+  const n=parseInt(document.getElementById('sel-pers').value);
+  const sid=document.getElementById('sel-mesa').value;
+  const c=cat(n),dur=S.tiempos[c]*60000,now=Date.now();
+  if(sid==='__auto__'){
+    const a=buscarMesas(n);if(!a){alert('Sin mesas disponibles.');return;}
+    ocupar(a,n,now,dur);
+  }else{
+    const m=S.mesas.find(x=>x.id===sid);
+    if(!m||!libre(m)){alert('Mesa no disponible.');return;}
+    if(m.cap<n){alert('Capacidad insuficiente.');return;}
+    ocupar([m],n,now,dur);
+  }
+  save();renderSalas();renderResumen();
+}
+
+function llenarSala(sid){
+  const now=Date.now();
+  S.mesas.filter(m=>m.salaId===sid&&m.estado==='libre').forEach(m=>{
+    const c=cat(m.cap);m.estado='ocupada';m.personas=m.cap;m.inicio=now;m.fin=now+S.tiempos[c]*60000;m.combinadaCon=null;
+  });
+  save();renderSalas();renderResumen();
+}
+
+function liberarSala(sid){
+  S.mesas.filter(m=>m.salaId===sid&&m.estado!=='libre').forEach(m=>{
+    aprender(m);
+    m.estado='libre';m.personas=null;m.inicio=null;m.fin=null;m.combinadaCon=null;
+  });
+  save();renderSalas();renderResumen();
+}
+
+function aprender(m){
+  const c=cat(m.personas||2);
+  const d=m.inicio?Math.round((Date.now()-m.inicio)/60000):null;
+  if(d&&d>2){S.historial[c].push(d);if(S.historial[c].length>15)S.historial[c].shift();recalc(c);}
+}
+function recalc(c){
+  const h=S.historial[c];if(!h.length)return;
+  S.tiempos[c]=Math.round((h.reduce((a,b)=>a+b,0)/h.length)*.65+S.tiempos[c]*.35);
+}
+
+function abrirLiberar(){
+  const ocu=S.mesas.filter(m=>m.estado!=='libre');
+  if(!ocu.length){alert('No hay mesas ocupadas.');return;}
+  document.getElementById('sel-liberar').innerHTML=ocu.map(m=>`<option value="${m.id}">${m.label} — ${m.personas} pers.</option>`).join('');
+  abrir('modal-liberar');
+}
+function confirmarLiberar(){ liberarById(document.getElementById('sel-liberar').value);cerrar('modal-liberar'); }
+function liberarById(id){
+  const m=S.mesas.find(x=>x.id===id);if(!m)return;
+  aprender(m);
+  if(m.combinadaCon){const m2=S.mesas.find(x=>x.id===m.combinadaCon);if(m2){m2.estado='libre';m2.personas=null;m2.inicio=null;m2.fin=null;m2.combinadaCon=null;}}
+  m.estado='libre';m.personas=null;m.inicio=null;m.fin=null;m.combinadaCon=null;
+  save();renderSalas();renderResumen();
+  if(document.getElementById('sec-config').classList.contains('active')) renderTiempos();
+}
+
+// ═══════════════════════════════════════════════════════
+// ESPERA
+// ═══════════════════════════════════════════════════════
+function addEspera(){
+  const nombre=document.getElementById('inp-nombre').value.trim()||'Grupo '+S.eid;
+  const tel=document.getElementById('inp-tel').value.trim();
+  const pers=document.getElementById('inp-pers').value;
+  const esperas=calcEsperas();
+  const tiempoEst=S.tiempos[cat(pers)];
+  const grupo={id:S.eid++,nombre,tel,personas:pers,cat:cat(pers),llegada:Date.now()};
+  S.espera.push(grupo);
+  document.getElementById('inp-nombre').value='';
+  document.getElementById('inp-tel').value='';
+  save();renderEspera();renderResumen();
+  // Abrir WA con mensaje de entrada
+  if(tel){
+    const tiempoStr=tiempoEst+' min';
+    const msg=buildMsg(S.config.msgEntrada,{nombre,tiempo:tiempoStr,restaurante:S.config.nombre});
+    mostrarWA(tel,msg,'Mensaje enviado al apuntarse en la lista');
+  }
+}
+
+function removeEspera(id){S.espera=S.espera.filter(e=>e.id!==id);save();renderEspera();renderResumen();}
+
+function notificarMesa(id){
+  const g=S.espera.find(e=>e.id===id);if(!g||!g.tel)return;
+  const msg=buildMsg(S.config.msgMesa,{nombre:g.nombre,restaurante:S.config.nombre});
+  mostrarWA(g.tel,msg,'Notificación de mesa disponible');
+}
+
+function buildMsg(tmpl,vars){
+  return tmpl.replace(/\{(\w+)\}/g,(_,k)=>vars[k]||'');
+}
+
+function mostrarWA(tel,msg,label){
+  waCtx={tel,msg};
+  document.getElementById('wa-preview-label').textContent=label+':';
+  document.getElementById('wa-preview').textContent=msg;
+  abrir('modal-wa');
+}
+
+function confirmarWA(){
+  if(!waCtx)return;
+  const num=waCtx.tel.replace(/\D/g,'');
+  const url=`https://wa.me/${num}?text=${encodeURIComponent(waCtx.msg)}`;
+  window.open(url,'_blank');
+  cerrar('modal-wa');
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+function guardarNombre(){
+  const v=document.getElementById('cfg-nombre').value.trim();if(!v)return;
+  S.config.nombre=v;document.getElementById('rest-nombre').textContent=v;save();
+}
+function guardarMensajes(){
+  S.config.msgEntrada=document.getElementById('msg-entrada').value;
+  S.config.msgMesa=document.getElementById('msg-mesa').value;
+  save();alert('Mensajes guardados ✓');
+}
+
+function toggleSala(sid){
+  const sala=S.config.salas.find(s=>s.id===sid);if(!sala)return;
+  sala.activa=!sala.activa;
+  S.mesas.filter(m=>m.salaId===sid).forEach(m=>m.salaActiva=sala.activa);
+  save();renderSalas();renderResumen();renderCfgSalas();
+}
+
+function abrirModalSala(sid){
+  editSalaId=sid||null;pDel=null;
+  if(sid){
+    const s=S.config.salas.find(x=>x.id===sid);
+    document.getElementById('modal-sala-titulo').textContent='Editar sala';
+    document.getElementById('ms-nombre').value=s.nombre;
+    document.getElementById('ms-mesas').value=s.mesas.map(m=>m.cap).join('\n');
+  }else{
+    document.getElementById('modal-sala-titulo').textContent='Nueva sala';
+    document.getElementById('ms-nombre').value='';document.getElementById('ms-mesas').value='';
+  }
+  abrir('modal-sala');
+}
+function guardarSala(){
+  const nombre=document.getElementById('ms-nombre').value.trim();if(!nombre){alert('Escribe un nombre.');return;}
+  const lines=document.getElementById('ms-mesas').value.split('\n').map(l=>l.trim()).filter(l=>l&&!isNaN(parseInt(l)));
+  if(!lines.length){alert('Añade al menos una mesa.');return;}
+  if(editSalaId){const s=S.config.salas.find(x=>x.id===editSalaId);s.nombre=nombre;s.mesas=lines.map(l=>({cap:parseInt(l)}));}
+  else{S.config.salas.push({id:'sala-'+Date.now(),nombre,activa:true,mesas:lines.map(l=>({cap:parseInt(l)}))});}
+  buildMesas();renderCfgSalas();renderSalas();renderResumen();cerrar('modal-sala');
+}
+function iniciarEliminar(sid){pDel=pDel===sid?null:sid;renderCfgSalas();}
+function confirmarEliminar(sid){
+  if(S.config.salas.length<=1){pDel=null;renderCfgSalas();return;}
+  S.config.salas=S.config.salas.filter(s=>s.id!==sid);
+  pDel=null;buildMesas();renderCfgSalas();renderSalas();renderResumen();
+}
+
+// ═══════════════════════════════════════════════════════
+// MODALES
+// ═══════════════════════════════════════════════════════
+function abrir(id){document.getElementById(id).classList.add('open');}
+function cerrar(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');});});
+
+// ═══════════════════════════════════════════════════════
+// RENDERS
+// ═══════════════════════════════════════════════════════
+function renderResumen(){
+  const ocu=S.mesas.filter(m=>m.estado!=='libre').length;
+  const tot=S.mesas.filter(m=>m.salaActiva).length;
+  const enEspera=S.espera.length;
+  document.getElementById('resumen').textContent=`${ocu}/${tot} mesas ocupadas · ${enEspera} en espera`;
+  const dot=document.getElementById('hdr-dot');
+  dot.className='hdr-dot'+(ocu===tot&&tot>0?' busy':'');
+  // Badge espera
+  const badge=document.getElementById('nav-espera-badge');
+  badge.style.display=enEspera>0?'flex':'none';
+  badge.textContent=enEspera;
+}
+
+function renderSalasTabs(){
+  const tabs=document.getElementById('sala-tabs');
+  tabs.innerHTML=`<button class="sala-tab${salaActual==='todas'?' active':''}" onclick="setSala('todas')">Todas</button>`
+    +S.config.salas.map(s=>`<button class="sala-tab${salaActual===s.id?' active':''}${!s.activa?' off':''}" onclick="setSala('${s.id}')">${s.nombre}</button>`).join('');
+}
+
+function setSala(sid){salaActual=sid;renderSalasTabs();renderMesasGrid();}
+
+function renderSalas(){renderSalasTabs();renderMesasGrid();renderSelMesa();}
+
+function renderMesasGrid(){
+  const cont=document.getElementById('salas-cont');
+  const salasVer=salaActual==='todas'?S.config.salas:S.config.salas.filter(s=>s.id===salaActual);
+  cont.innerHTML=salasVer.map(sala=>{
+    const mSala=S.mesas.filter(m=>m.salaId===sala.id);
+    const activa=sala.activa;
+    const tieneOcu=mSala.some(m=>m.estado!=='libre');
+    const items=mSala.map(m=>{
+      if(!activa)return `<div class="mesa-card inactiva"><div class="mesa-id">${m.label.split(' ')[1]}</div><div class="mesa-cap">Cap. ${m.cap}</div><span class="badge b-off">Inactiva</span></div>`;
+      const cls=m.estado==='combinada'?'combinada':m.estado==='ocupada'?'ocupada':'libre';
+      const badge=m.estado==='combinada'?'<span class="badge b-comb">Combinada</span>':m.estado==='ocupada'?'<span class="badge b-ocu">Ocupada</span>':'<span class="badge b-libre">Libre</span>';
+      let sub='';
+      if(m.estado!=='libre'){
+        const rest=restMs(m);
+        const pct=m.fin&&m.inicio?Math.round(Math.min(100,((Date.now()-m.inicio)/(m.fin-m.inicio))*100)):0;
+        sub=`<div class="mesa-pers">${m.personas} personas</div><div class="mesa-rest">~${rest!==null?fmin(rest):'—'}</div><div class="prog"><div class="prog-fill" style="width:${pct}%;"></div></div>`;
+        if(m.combinadaCon){const m2=S.mesas.find(x=>x.id===m.combinadaCon);if(m2)sub+=`<div style="font-size:10px;color:var(--text3);margin-top:4px;">+${m2.label.split(' ')[1]}</div>`;}
+      }
+      return `<div class="mesa-card ${cls}"><div class="mesa-id">${m.label.split(' ')[1]}</div><div class="mesa-cap">Cap. ${m.cap}</div>${badge}${sub}</div>`;
+    }).join('');
+
+    return `<div style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;">${sala.nombre} · ${mSala.length} mesas${!activa?' · desactivada':''}</div>
+        <div class="flex gap6">
+          ${activa?`<button class="btn btn-sec btn-sm" onclick="llenarSala('${sala.id}')">Llenar</button>`:''}
+          ${activa&&tieneOcu?`<button class="btn btn-sec btn-sm" onclick="liberarSala('${sala.id}')">Liberar todo</button>`:''}
+          <button class="tgl ${activa?'tgl-on':'tgl-off'}" onclick="toggleSala('${sala.id}')"><div class="tgl-k" style="left:${activa?'21px':'3px'};"></div></button>
+        </div>
+      </div>
+      <div class="mesas-grid">${items}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSelMesa(){
+  const sel=document.getElementById('sel-mesa');
+  sel.innerHTML=`<option value="__auto__">Auto (mejor mesa)</option>`+S.mesas.filter(libre).map(m=>`<option value="${m.id}">${m.label} (${m.cap}p)</option>`).join('');
+}
+
+function renderEspera(){
+  const list=document.getElementById('lista-espera');
+  const empty=document.getElementById('espera-empty');
+  if(!S.espera.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const esperas=calcEsperas();
+  list.innerHTML=S.espera.map((e,i)=>{
+    const est=esperas[i]??S.tiempos[cat(e.personas)];
+    const urgente=est<8&&i===0;
+    const estStr=est===0?'¡Mesa disponible!':'~'+est+' min';
+    const tieneWA=!!e.tel;
+    const waBtn=tieneWA?`<button class="wa-btn" onclick="notificarMesa(${e.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg> Avisar mesa</button>`:'';
+    return `<div class="espera-card${urgente?' urgente':''}">
+      <div class="enum">${i+1}</div>
+      <div class="einfo">
+        <div class="ename">${e.nombre}</div>
+        <div class="esub">${e.personas} pers.${e.tel?' · '+e.tel:''} · ${catL(e.cat)}</div>
+        ${waBtn}
+      </div>
+      <div class="etime">
+        <div class="emin" style="color:${urgente?'var(--amber)':'var(--text)'};">${estStr}</div>
+        <div class="eest">estimado</div>
+      </div>
+      <span class="ex" onclick="removeEspera(${e.id})">&#215;</span>
+    </div>`;
+  }).join('');
+}
+
+function renderTiempos(){
+  const cats=['pequena','mediana','grande'];
+  const labels={pequena:'Pequeño (1–2)',mediana:'Mediano (3–5)',grande:'Grande (6+)'};
+  document.getElementById('tiempos-list').innerHTML=cats.map(c=>{
+    const h=S.historial[c],pct=Math.min(100,Math.round(S.tiempos[c]/120*100));
+    return `<div class="tiempo-item">
+      <span class="tcat">${labels[c]}</span>
+      <div class="tbar"><div class="tbar-fill" style="width:${pct}%;"></div></div>
+      <span class="tval">${S.tiempos[c]} min</span>
+      <span class="tdat">${h.length?h.length+' datos':'sin datos'}</span>
+    </div>`;
+  }).join('');
+  const tot=Object.values(S.historial).flat().length;
+  document.getElementById('hist-txt').textContent=tot===0?'Sin datos aún. Los tiempos se ajustan automáticamente al liberar mesas.':`${tot} servicios registrados. Sistema aprendiendo continuamente.`;
+}
+
+function renderCfgSalas(){
+  document.getElementById('cfg-salas').innerHTML=S.config.salas.map(s=>{
+    const isD=pDel===s.id,solo=S.config.salas.length<=1;
+    const caps=s.mesas.map((m,i)=>`<span class="mpill">M${i+1}·${m.cap}p</span>`).join('');
+    return `<div class="sala-cfg-card">
+      <div class="flex gap8" style="align-items:flex-start;justify-content:space-between;flex-wrap:wrap;">
+        <div>
+          <div class="sala-cfg-name">${s.nombre}</div>
+          <div class="sala-cfg-sub">${s.mesas.length} mesas · ${s.activa?'Activa':'Desactivada'}</div>
+        </div>
+        <div class="flex gap6 wrap" style="align-items:center;">
+          ${!isD?`<button class="btn btn-sec btn-sm" onclick="abrirModalSala('${s.id}')">Editar</button>`:''}
+          ${!isD&&!solo?`<button class="btn btn-red btn-sm" onclick="iniciarEliminar('${s.id}')">Eliminar</button>`:''}
+          ${isD?`<span style="font-size:12px;color:var(--text3);">¿Seguro?</span><button class="btn btn-red btn-sm" onclick="confirmarEliminar('${s.id}')">Sí, borrar</button><button class="btn btn-sec btn-sm" onclick="iniciarEliminar('${s.id}')">No</button>`:''}
+        </div>
+      </div>
+      <div class="mesas-pills">${caps}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════════
+function goTab(t){
+  ['salas','espera','config'].forEach(s=>{
+    document.getElementById('sec-'+s).classList.toggle('active',s===t);
+    document.getElementById('nav-'+s).classList.toggle('active',s===t);
+  });
+  if(t==='salas'){renderSalas();renderResumen();}
+  if(t==='espera') renderEspera();
+  if(t==='config'){
+    renderCfgSalas();renderTiempos();
+    document.getElementById('cfg-nombre').value=S.config.nombre;
+    document.getElementById('msg-entrada').value=S.config.msgEntrada;
+    document.getElementById('msg-mesa').value=S.config.msgMesa;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+buildMesas();
+document.getElementById('rest-nombre').textContent=S.config.nombre;
+renderSalas();renderResumen();
+
+setInterval(()=>{
+  if(document.getElementById('sec-salas').classList.contains('active')) renderSalas();
+  if(document.getElementById('sec-espera').classList.contains('active')) renderEspera();
+},30000);
+</script>
+</body>
+</html>
